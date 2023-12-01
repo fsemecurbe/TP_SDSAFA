@@ -80,16 +80,14 @@ pc
 pc <- pc %>% mutate(pu = euros / tonnes)
 ```
 
-Maintenant à vous de faire une boxplot à l'aide du package ggplot2 (en cas de difficulté, je vous conseille l'excellent MaRdi de Cécile et Noémie) :
-
-
+Maintenant à vous de faire une boxplot à l'aide du package ggplot2 :
 
 
 ```{r boxplot, exercise=TRUE, exercise.setup="prepare_pu"}
-p <- ggplot(pc,...) 
+p <- ggplot(pc,...)  +
+  
 p
 ```
-
 
 ```{r boxplot-hint}
 p <- ggplot(pc, aes(y=pu)) + 
@@ -109,7 +107,7 @@ pc_5 = pc %>%
 
 
 p <- ggplot(pc %>% filter(commune ...) , aes(... , y=pu)) + 
-  geom_boxplot()
+  
 p
 ```
 
@@ -171,7 +169,6 @@ Maintenant pouvez vous rajouter au graphique précédent la droite théorique ($
 learnr::question("Que pouvez-vous en déduire sur les données récoltées ?",
   learnr::answer("Il y a des valeurs abberantes et je m'en fiche."),
   learnr::answer("Il y a des valeurs abberantes et cela risque de biaiser le prix moyen.", correct = TRUE),
-  learnr::answer("François S est un BG.", message="C'est une réalité objective, mais ce n'est pas le sujet du TP"),
   random_answer_order = TRUE,
   allow_retry = TRUE
 )
@@ -184,7 +181,7 @@ learnr::question("Que pouvez-vous en déduire sur les données récoltées ?",
 En statistique, la régression est un outil utilisé pour modéliser des relations linéaires entre variables. Plus précisément, l'objectif est d'expliquer la variable $euros$ en fonction de la variable $tonnes$.
 
 $$ euros = P_{moyen} \times tonnes + \epsilon $$
-Où $P_{moyen}$ est le prix moyen et $\epsilon$, un résidu que l'on espère le plus petit possible et le plus aléatoire possible. 
+Où $P_{moyen}$ est le prix moyen et $\epsilon$, un résidu que l'on espère le plus petit possible et le plus aléatoire possible (le moins structuré). 
 
 En pratique, on utilise la commande [lm](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/lm) pour linear model pour estimer le meilleur modèle, soit celui dont les $\epsilon$ sont les plus satisfaisants.
 
@@ -193,21 +190,24 @@ Vous allez faire la modélisation en forçant à 0, l'ordonnée à l'origine, en
 ```{r regression, exercise=TRUE,exercise.setup="prepare_pu"}
 modele = lm(..., pc) 
 summary(modele) # summary permet de faire une synthése statistique de l'estimation
+plot(modele) # affiche les principaux indicateurs qualités de l'estimation
 ```
 
 ```{r regression-hint}
 modele = lm(euros~tonnes ..., pc) 
-summary(modele) 
+summary(modele)
+plot(modele)
 ```
 
 ```{r regression-solution}
 modele = lm(euros~tonnes-1, pc) 
 summary(modele) 
+plot(modele)
 ```
 
 Pouvez-vous interpréter les résultats obtenus ?
 
-Pouvez vous rajouter à votre nuage de points la droite de régression, soit à l'aide de la commande précédente ou à l'aide de *geom_smooth* :
+Pouvez vous rajouter à votre nuage de points la droite de régression, soit à l'aide de la commande précédente ou à l'aide de [geom_smooth](https://ggplot2.tidyverse.org/reference/geom_smooth.html) :
 
 
 ```{r scatter_reg, exercise=TRUE, message=FALSE,exercise.setup="prepare_pu"}
@@ -231,9 +231,8 @@ ggplotly(graph)
 
 ```{r test3, echo=FALSE}
 learnr::question("Que pouvez-vous de l'approche par la régression ?",
-  learnr::answer("C'est de la bouse de stateux", message="Effectivement, ce n'est pas terrible, car la régression est super sensible aux valeurs abberantes."),
-  learnr::answer("On peut mieux faire en utilisant une régression dite robuste", correct = TRUE),
-  learnr::answer("Philippe est vraiment un BG.", message="La vérité sort de la bouche des IA, mais cette réponse n'a pas lieu d'être dans ce TP."),
+  learnr::answer("C'est décevant, c'est encore pire que l'approche naive. ", message="Effectivement, ce n'est pas terrible, car la régression est super sensible aux valeurs abberantes."),
+  learnr::answer("On peut mieux faire en utilisant une régression dite robuste.", correct = TRUE),
   random_answer_order = TRUE,
   allow_retry = TRUE
 )
@@ -293,9 +292,9 @@ ggplotly(graph)
 
 ## À quoi ça sert, tout ça ?
 
-L'exemple du TP est une création fictive ; il serait improbable qu'une collègue produise 100 tonnes de pois chiches sans en proposer ne serait-ce qu'un kilogramme à son supérieur. En pratique, la méthode que nous avons étudiée s'applique à toutes les relations linéaires. Par exemple, dans le contexte de la relation entre la surface cultivée et la récolte, le prix moyen est remplacé par le rendement.
+En pratique, la méthode que nous avons étudiée s'applique à toutes les relations linéaires. Par exemple, dans le contexte de la relation entre la surface cultivée et la récolte, le prix moyen est remplacé par le rendement.
 
-Cette approche offre une quasi-automatisation des procédures. Cependant, il demeure essentiel de vérifier la cohérence de la droite du modèle avec les données réelles. Cette méthode est employée dans le cadre de prodcom (EXFSRI) pour traiter les cas de non-réponse partielle. Laurence utilise ce calcul du prix moyen pour redresser la valeur des productions déclarées.
+Cette approche offre une quasi-automatisation des procédures. Cependant, il demeure essentiel de vérifier la cohérence de la droite du modèle avec les données réelles. Cette méthode est employée dans le cadre de prodcom (EXFSRI) pour traiter les cas de non-réponse partielle et redresser la valeur des productions déclarées.
 
 
 
