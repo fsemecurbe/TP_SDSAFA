@@ -1,0 +1,300 @@
+---
+title: "Détéction d'anomalies en présence d'une relation linéaire entre deux variables"
+output: 
+  learnr::tutorial:
+    progressive: true
+runtime: shiny_prerendered
+description: "Welcome to learnr tutorials!"
+---
+
+
+## Présentation du problème 
+
+La coopérative agricole **Lauragay - Terre d’Inclusion**, basée à Ayguesvives, s'engage à aider ses adhérents à obtenir le meilleur prix pour leurs pois chiches. Cependant, suite à l'analyse des données recueillies par l'application **CAPISTON** en termes de valeurs et de quantités, la directrice de la coopérative constate que le prix moyen calculé ne correspond pas à ses attentes. En tant que Data Scientist débutant, vous êtes sollicité(e) pour identifier et résoudre ces anomalies, et ainsi produire un chiffre en adéquation avec les attentes de la directrice. 
+
+**Avant de commencer le TP, quelles sont vos habitudes quotidiennes pour faire face à cette situation ?**
+
+
+
+
+Chaque ligne de la table *pc* décrit une exploitation :
+
+* **tonnes** : la quantité de pois chiche vendue ;
+* **euros** : le prix ;
+* **commune** : le siége de l'exploitation.
+
+
+```{r setup, message=FALSE}
+library(ggplot2)
+library(plotly)
+library(tidyverse)
+pc = read_csv('cooperative_lauragay.csv')
+pc
+```
+
+
+Dans un premier temps,  pouvez vous recalculer le prix moyen de la tonne de pois chiche (à l'ancienne sans utiliser dpylr). il faut utiliser **$** :
+
+```{r prix_moyen, exercise=TRUE}
+# calculer le prix moyen, soit la somme des prix divisée par la somme des quantités
+total_euros <- 
+total_tonnes <-  
+prix_moyen <- total_euros / total_tonnes
+prix_moyen
+```
+
+```{r prix_moyen-hint}
+total_tonnes <- sum(pc$tonnes)
+total_euros <- 
+prix_moyen = total_euros / total_tonnes 
+prix_moyen
+```
+
+```{r prix_moyen-solution}
+total_tonnes <- sum(pc$tonnes)
+total_euros <- sum(pc$euros)
+prix_moyen <- total_euros / total_tonnes 
+prix_moyen
+```
+
+## Un peu de statistique simple
+
+Le prix moyen sur le marché international du pois chiche de Baziége est de 900 €, comment expliquer ce décallage avec votre prix moyen ?
+
+Vous allez commencer par faire un peu de statistique descriptive sur les prix unitaires. Pour ce faire, vous allez commencer par rajouter une variable *pu* à l'aide de **dpylr** et de son **mutate**. 
+
+
+```{r prix_unitaire, exercise=TRUE, message=FALSE}
+pc <- pc %>% mutate()
+pc
+```
+
+```{r prix_unitaire-hint}
+pc <- pc %>% mutate(pu = euros / tonnes)
+pc
+```
+
+
+
+```{r prepare_pu, echo=FALSE}
+pc <- pc %>% mutate(pu = euros / tonnes)
+```
+
+Maintenant à vous de faire une boxplot à l'aide du package ggplot2 :
+
+
+```{r boxplot, exercise=TRUE, exercise.setup="prepare_pu"}
+p <- ggplot(pc,...)  +
+  
+p
+```
+
+```{r boxplot-hint}
+p <- ggplot(pc, aes(y=pu)) + 
+  geom_boxplot()
+p
+```
+
+
+Pouvez-vous allez plus loin et faire une boxplot par commune pour voir des effets spatiaux. Comme, il y a beaucoup trop de communes, on restreint aux 5 plus grosses  :
+
+```{r boxplot2, exercise=TRUE, exercise.setup="prepare_pu"}
+pc_5 = pc %>% 
+  group_by(commune) %>% 
+  summarise_all(sum) %>% 
+  arrange(desc(tonnes), .by_group = TRUE) %>% 
+  slice_head(n=5)
+
+
+p <- ggplot(pc %>% filter(commune ...) , aes(... , y=pu)) + 
+  
+p
+```
+
+```{r boxplot2-hint}
+pc_5 = pc %>% 
+  group_by(commune) %>% 
+  summarise_all(sum) %>% 
+  arrange(desc(tonnes), .by_group = TRUE) %>% 
+  slice_head(n=5)
+
+
+p <- ggplot(pc %>% filter(commune %in% pc_5$commune), aes(... , y=pu)) + 
+  geom_boxplot()
+p
+```
+
+```{r boxplot2-solution}
+# tu vas arréter de tricher et travailler un petit peu !
+pc_5 = pc %>% 
+  group_by(commune) %>% 
+  summarise_all(sum) %>% 
+  arrange(desc(tonnes), .by_group = TRUE) %>% 
+  slice_head(n=5)
+
+p <- ggplot(pc %>% filter(commune %in% pc_5$commune), aes(x=commune, y=pu)) + 
+  geom_boxplot()
+p
+```
+
+Les prix unitaires sont très hétérogénes. Comment aller plus loin ! 
+
+## Un peu de statistique bivariée
+
+Bien que le boxplot soit informatif, il présente des limites lorsqu'il s'agit du prix unitaire. Il ne nous permet pas de discerner si les valeurs aberrantes correspondent à des volumes significatifs, pouvant ainsi exercer une influence considérable sur le prix moyen. Dans ce contexte, je propose d'adopter une approche différente en utilisant un nuage de points pour obtenir une visualisation plus détaillée de la distribution des données et mieux évaluer le lien entre les volumes et les prix unitaires. 
+
+```{r scatter, exercise=TRUE,exercise.setup="prepare_pu"}
+ggplot(pc, aes(..., ...)) + ...
+ggplotly(graph)
+```
+
+```{r scatter-hint}
+ggplot(pc, aes(x=tonnes, y=euros)) + ...
+ggplotly(graph)
+```
+
+```{r scatter-solution}
+# faut pas abuser, il est temps de travailler !
+graph = ggplot(pc, aes(x=tonnes, y=euros)) + geom_point()
+ggplotly(graph)
+```
+
+Maintenant pouvez vous rajouter au graphique précédent la droite théorique ($tonnes$, $tonnes \times P_{moyen}$). $P_{moyen}$ est le prix moyen calculé au début du TP, pour mémoire 1079. Pour vous aider, il faut rajouter l'instruction *+ geom_abline(intercept=..., slope=...)*.
+
+
+
+
+
+```{r test2, echo=FALSE}
+learnr::question("Que pouvez-vous en déduire sur les données récoltées ?",
+  learnr::answer("Il y a des valeurs abberantes et je m'en fiche."),
+  learnr::answer("Il y a des valeurs abberantes et cela risque de biaiser le prix moyen.", correct = TRUE),
+  random_answer_order = TRUE,
+  allow_retry = TRUE
+)
+```
+
+
+
+## Une première tentative de modélisation  
+
+En statistique, la régression est un outil utilisé pour modéliser des relations linéaires entre variables. Plus précisément, l'objectif est d'expliquer la variable $euros$ en fonction de la variable $tonnes$.
+
+$$ euros = P_{moyen} \times tonnes + \epsilon $$
+Où $P_{moyen}$ est le prix moyen et $\epsilon$, un résidu que l'on espère le plus petit possible et le plus aléatoire possible (le moins structuré). 
+
+En pratique, on utilise la commande [lm](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/lm) pour linear model pour estimer le meilleur modèle, soit celui dont les $\epsilon$ sont les plus satisfaisants.
+
+Vous allez faire la modélisation en forçant à 0, l'ordonnée à l'origine, en anglais *intercept*.
+
+```{r regression, exercise=TRUE,exercise.setup="prepare_pu"}
+modele = lm(..., pc) 
+summary(modele) # summary permet de faire une synthése statistique de l'estimation
+plot(modele) # affiche les principaux indicateurs qualités de l'estimation
+```
+
+```{r regression-hint}
+modele = lm(euros~tonnes ..., pc) 
+summary(modele)
+plot(modele)
+```
+
+```{r regression-solution}
+modele = lm(euros~tonnes-1, pc) 
+summary(modele) 
+plot(modele)
+```
+
+Pouvez-vous interpréter les résultats obtenus ?
+
+Pouvez vous rajouter à votre nuage de points la droite de régression, soit à l'aide de la commande précédente ou à l'aide de [geom_smooth](https://ggplot2.tidyverse.org/reference/geom_smooth.html) :
+
+
+```{r scatter_reg, exercise=TRUE, message=FALSE,exercise.setup="prepare_pu"}
+graph <- ggplot(pc, aes(x=tonnes, y=euros)) + geom_point() + geom_smooth(method=lm, formula=y~x-1)
+ggplotly(graph)
+```
+
+```{r scatter_reg-hint}
+graph <- ggplot(pc, aes(x=tonnes, y=euros)) + geom_point() + geom_smooth(method=lm, formula=y~x-1)
+ggplotly(graph)
+```
+
+```{r scatter_reg-solution}
+graph <- ggplot(pc, aes(x=tonnes, y=euros)) + geom_point() + geom_smooth(method=lm, formula=y~x-1)
+ggplotly(graph)
+```
+
+
+
+
+
+```{r test3, echo=FALSE}
+learnr::question("Que pouvez-vous de l'approche par la régression ?",
+  learnr::answer("C'est décevant, c'est encore pire que l'approche naive. ", message="Effectivement, ce n'est pas terrible, car la régression est super sensible aux valeurs abberantes."),
+  learnr::answer("On peut mieux faire en utilisant une régression dite robuste.", correct = TRUE),
+  random_answer_order = TRUE,
+  allow_retry = TRUE
+)
+```
+
+
+## Une modélisation dite robuste 
+
+Notre analyse antérieure s'est avérée inefficace en raison de la présence de données aberrantes. Afin de remédier à cette situation, des modélisations robustes face à ces anomalies ont été élaborées, dont certaines sont mises en œuvre par la fonction [rlm du package MASS](https://www.rdocumentation.org/packages/MASS/versions/7.3-58.3/topics/rlm) :
+
+
+```{r regression_rlm, exercise=TRUE, message=FALSE,exercise.setup="prepare_pu"}
+library(MASS)
+modele <-
+summary(modele)
+```
+
+```{r regression_rlm-hint}
+library(MASS)
+modele <- rlm(... , data = pc)
+summary(modele)
+```
+
+```{r regression_rlm-solution}
+library(MASS)
+modele <- rlm(euros~tonnes-1  , data = pc)
+summary(modele)
+```
+
+On peut comme précédemment refaire le nuage de points et rajouter la modélisation linéaire :
+
+```{r scatter_reg_rlm, exercise=TRUE, message=FALSE,exercise.setup="prepare_pu"}
+library(...)
+graph <- ggplot(pc, aes(x=tonnes, y=euros)) +
+                  geom_point() + 
+                  geom_smooth(..., formula=y~x-1)
+ggplotly(graph)
+```
+
+
+```{r scatter_reg_rlm-hint}
+library(MASS)
+graph <- ggplot(pc, aes(x=tonnes, y=euros)) +
+                  geom_point() + 
+                  geom_smooth(..., formula=y~x-1)
+ggplotly(graph)
+```
+
+
+```{r scatter_reg_rlm-solution}
+library(MASS)
+graph <- ggplot(pc, aes(x=tonnes, y=euros)) +
+                  geom_point() + 
+                  geom_smooth(method=rlm, formula=y~x-1)
+ggplotly(graph)
+```
+
+## À quoi ça sert, tout ça ?
+
+En pratique, la méthode que nous avons étudiée s'applique à toutes les relations linéaires. Par exemple, dans le contexte de la relation entre la surface cultivée et la récolte, le prix moyen est remplacé par le rendement.
+
+Cette approche offre une quasi-automatisation des procédures. Cependant, il demeure essentiel de vérifier la cohérence de la droite du modèle avec les données réelles. Cette méthode est employée dans le cadre de prodcom (EXFSRI) pour traiter les cas de non-réponse partielle et redresser la valeur des productions déclarées.
+
+
+

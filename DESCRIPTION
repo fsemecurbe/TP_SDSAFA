@@ -1,0 +1,18 @@
+Package: TPSDSAFA
+Type: Package
+Title: TP de la SDSAFA
+Version: 0.1.0
+Author: François Semecurbe
+Maintainer: <francois.semecurbe@agriculture.gouv.fr>
+Description: TP de la SDSAFA sur R, Python, Observable, Shiny...
+License: GPL
+Encoding: UTF-8
+LazyData: true
+Imports: 
+    dplyr,
+    ggplot2,
+    MASS,
+    plotly,
+    tidyr
+Suggests: 
+    learnr
